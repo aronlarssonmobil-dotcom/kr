@@ -6,7 +6,8 @@
     "start": "remotion studio",
     "build": "remotion render TradingVideo out/trading-video.mp4",
     "build:intro": "remotion render TradingIntro out/trading-intro.mp4",
-    "build:price": "remotion render PriceAction out/price-action.mp4"
+    "build:price": "remotion render PriceAction out/price-action.mp4",
+    "build:heatmap": "remotion render MarketHeatmap out/market-heatmap.mp4"
   },
   "dependencies": {
     "@remotion/cli": "4.0.414",
