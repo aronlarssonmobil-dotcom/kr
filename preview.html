@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Market Heatmap Preview</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: linear-gradient(145deg, #08080c 0%, #0f1018 50%, #0a0a10 100%);
+      min-height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      animation: pulse 4s ease-in-out infinite;
+    }
+    .glow-orb.green {
+      top: 10%; left: 20%; width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(0, 255, 136, 0.08) 0%, transparent 70%);
+    }
+    .glow-orb.red {
+      bottom: 10%; right: 20%; width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(255, 71, 87, 0.08) 0%, transparent 70%);
+    }
+    .glow-orb.blue {
+      top: 50%; left: 50%; transform: translate(-50%, -50%); width: 800px; height: 800px;
+      background: radial-gradient(circle, rgba(0, 212, 255, 0.05) 0%, transparent 60%);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+
+    .header {
+      position: absolute;
+      top: 50px;
+      left: 100px;
+      animation: fadeSlideIn 0.8s ease-out;
+    }
+    .title {
+      font-size: 72px;
+      font-weight: 800;
+      color: #fff;
+      text-shadow: 0 0 60px rgba(0, 212, 255, 0.8);
+      letter-spacing: 4px;
+    }
+    .subtitle {
+      font-size: 20px;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 8px;
+      margin-top: 8px;
+    }
+
+    .live-indicator {
+      position: absolute;
+      top: 70px;
+      right: 100px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: fadeIn 1s ease-out 0.5s both;
+    }
+    .live-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #00ff88;
+      box-shadow: 0 0 20px #00ff88;
+      animation: livePulse 1.5s ease-in-out infinite;
+    }
+    @keyframes livePulse {
+      0%, 100% { box-shadow: 0 0 10px #00ff88; }
+      50% { box-shadow: 0 0 30px #00ff88; }
+    }
+    .live-text {
+      font-size: 18px;
+      color: #00ff88;
+      letter-spacing: 4px;
+      font-weight: 600;
+    }
+
+    .tiles-container {
+      position: absolute;
+      top: 180px;
+      left: 100px;
+      right: 100px;
+      bottom: 150px;
+    }
+
+    .tile {
+      position: absolute;
+      border-radius: 20px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      animation: tileIn 0.6s ease-out both;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .tile:hover {
+      transform: scale(1.02);
+    }
+
+    .tile.positive {
+      background: linear-gradient(135deg, rgba(0, 255, 136, 0.15) 0%, rgba(20,20,30,0.9) 100%);
+      border: 2px solid rgba(0, 255, 136, 0.4);
+      box-shadow: 0 0 40px rgba(0, 255, 136, 0.3), inset 0 0 60px rgba(0,0,0,0.5);
+    }
+    .tile.negative {
+      background: linear-gradient(135deg, rgba(255, 71, 87, 0.15) 0%, rgba(20,20,30,0.9) 100%);
+      border: 2px solid rgba(255, 71, 87, 0.4);
+      box-shadow: 0 0 40px rgba(255, 71, 87, 0.3), inset 0 0 60px rgba(0,0,0,0.5);
+    }
+
+    .tile.large { width: 380px; height: 280px; }
+    .tile.medium { width: 280px; height: 200px; }
+    .tile.small { width: 200px; height: 150px; }
+
+    .tile .ticker {
+      font-weight: 800;
+      color: #fff;
+    }
+    .tile.large .ticker { font-size: 42px; }
+    .tile.medium .ticker { font-size: 32px; }
+    .tile.small .ticker { font-size: 24px; }
+
+    .tile.positive .ticker { text-shadow: 0 0 20px rgba(0, 255, 136, 0.8); }
+    .tile.negative .ticker { text-shadow: 0 0 20px rgba(255, 71, 87, 0.8); }
+
+    .tile .name {
+      color: rgba(255,255,255,0.5);
+      margin-top: 4px;
+    }
+    .tile.large .name { font-size: 16px; }
+    .tile.medium .name, .tile.small .name { font-size: 13px; }
+
+    .tile .change {
+      font-weight: 700;
+    }
+    .tile.large .change { font-size: 48px; }
+    .tile.medium .change { font-size: 36px; }
+    .tile.small .change { font-size: 28px; }
+
+    .tile.positive .change { color: #00ff88; text-shadow: 0 0 30px rgba(0, 255, 136, 0.6); }
+    .tile.negative .change { color: #ff4757; text-shadow: 0 0 30px rgba(255, 71, 87, 0.6); }
+
+    .tile .mcap {
+      color: rgba(255,255,255,0.4);
+      margin-top: 4px;
+    }
+    .tile.large .mcap { font-size: 16px; }
+    .tile.medium .mcap, .tile.small .mcap { font-size: 13px; }
+
+    .shine {
+      position: absolute;
+      top: 0;
+      left: -100px;
+      width: 100px;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      transform: skewX(-20deg);
+      animation: shine 3s ease-in-out infinite;
+    }
+    @keyframes shine {
+      0% { left: -100px; }
+      50%, 100% { left: calc(100% + 100px); }
+    }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes tileIn {
+      from { opacity: 0; transform: scale(0.8) translateY(40px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* Tile positions */
+    .tile:nth-child(1) { left: 0; top: 0; animation-delay: 0s; }
+    .tile:nth-child(2) { left: 400px; top: 0; animation-delay: 0.1s; }
+    .tile:nth-child(3) { left: 800px; top: 0; animation-delay: 0.15s; }
+    .tile:nth-child(4) { left: 1100px; top: 0; animation-delay: 0.2s; }
+    .tile:nth-child(5) { left: 800px; top: 220px; animation-delay: 0.25s; }
+    .tile:nth-child(6) { left: 1100px; top: 220px; animation-delay: 0.3s; }
+    .tile:nth-child(7) { left: 0; top: 300px; animation-delay: 0.35s; }
+    .tile:nth-child(8) { left: 220px; top: 300px; animation-delay: 0.4s; }
+    .tile:nth-child(9) { left: 440px; top: 300px; animation-delay: 0.45s; }
+    .tile:nth-child(10) { left: 0; top: 470px; animation-delay: 0.5s; }
+    .tile:nth-child(11) { left: 220px; top: 470px; animation-delay: 0.55s; }
+    .tile:nth-child(12) { left: 440px; top: 470px; animation-delay: 0.6s; }
+
+    .stats-bar {
+      position: absolute;
+      bottom: 40px;
+      left: 100px;
+      right: 100px;
+      display: flex;
+      justify-content: space-between;
+      animation: fadeIn 1s ease-out 1s both;
+    }
+    .stat {
+      text-align: center;
+    }
+    .stat-label {
+      font-size: 13px;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 3px;
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      margin-top: 8px;
+      text-shadow: 0 0 20px rgba(0,212,255,0.3);
+    }
+
+    .scan-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(0,212,255,0.3), transparent);
+      box-shadow: 0 0 20px rgba(0,212,255,0.5);
+      animation: scan 6s linear infinite;
+    }
+    @keyframes scan {
+      from { top: 0; }
+      to { top: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="glow-orb green"></div>
+  <div class="glow-orb red"></div>
+  <div class="glow-orb blue"></div>
+
+  <div class="header">
+    <div class="title">CRYPTO MARKET</div>
+    <div class="subtitle">REAL-TIME MARKET OVERVIEW</div>
+  </div>
+
+  <div class="live-indicator">
+    <div class="live-dot"></div>
+    <span class="live-text">LIVE</span>
+  </div>
+
+  <div class="tiles-container">
+    <div class="tile large positive">
+      <div class="shine"></div>
+      <div><div class="ticker">BTC</div><div class="name">Bitcoin</div></div>
+      <div><div class="change">+5.42%</div><div class="mcap">MCap: $1.3T</div></div>
+    </div>
+    <div class="tile large positive">
+      <div class="shine"></div>
+      <div><div class="ticker">ETH</div><div class="name">Ethereum</div></div>
+      <div><div class="change">+3.21%</div><div class="mcap">MCap: $420B</div></div>
+    </div>
+    <div class="tile medium negative">
+      <div class="shine"></div>
+      <div><div class="ticker">SOL</div><div class="name">Solana</div></div>
+      <div><div class="change">-2.15%</div><div class="mcap">MCap: $89B</div></div>
+    </div>
+    <div class="tile medium positive">
+      <div class="shine"></div>
+      <div><div class="ticker">BNB</div><div class="name">Binance</div></div>
+      <div><div class="change">+1.87%</div><div class="mcap">MCap: $95B</div></div>
+    </div>
+    <div class="tile medium negative">
+      <div class="shine"></div>
+      <div><div class="ticker">XRP</div><div class="name">Ripple</div></div>
+      <div><div class="change">-4.32%</div><div class="mcap">MCap: $67B</div></div>
+    </div>
+    <div class="tile medium positive">
+      <div class="shine"></div>
+      <div><div class="ticker">ADA</div><div class="name">Cardano</div></div>
+      <div><div class="change">+7.65%</div><div class="mcap">MCap: $45B</div></div>
+    </div>
+    <div class="tile small negative">
+      <div class="shine"></div>
+      <div><div class="ticker">AVAX</div><div class="name">Avalanche</div></div>
+      <div><div class="change">-1.23%</div><div class="mcap">MCap: $28B</div></div>
+    </div>
+    <div class="tile small positive">
+      <div class="shine"></div>
+      <div><div class="ticker">DOT</div><div class="name">Polkadot</div></div>
+      <div><div class="change">+2.98%</div><div class="mcap">MCap: $22B</div></div>
+    </div>
+    <div class="tile small negative">
+      <div class="shine"></div>
+      <div><div class="ticker">MATIC</div><div class="name">Polygon</div></div>
+      <div><div class="change">-3.45%</div><div class="mcap">MCap: $18B</div></div>
+    </div>
+    <div class="tile small positive">
+      <div class="shine"></div>
+      <div><div class="ticker">LINK</div><div class="name">Chainlink</div></div>
+      <div><div class="change">+4.12%</div><div class="mcap">MCap: $15B</div></div>
+    </div>
+    <div class="tile small negative">
+      <div class="shine"></div>
+      <div><div class="ticker">ATOM</div><div class="name">Cosmos</div></div>
+      <div><div class="change">-0.87%</div><div class="mcap">MCap: $12B</div></div>
+    </div>
+    <div class="tile small positive">
+      <div class="shine"></div>
+      <div><div class="ticker">UNI</div><div class="name">Uniswap</div></div>
+      <div><div class="change">+6.23%</div><div class="mcap">MCap: $9B</div></div>
+    </div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat">
+      <div class="stat-label">TOTAL MARKET CAP</div>
+      <div class="stat-value">$2.8T</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">24H VOLUME</div>
+      <div class="stat-value">$156B</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">BTC DOMINANCE</div>
+      <div class="stat-value">52.4%</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">FEAR & GREED</div>
+      <div class="stat-value">72 GREED</div>
+    </div>
+  </div>
+
+  <div class="scan-line"></div>
+</body>
+</html>
