@@ -1150,7 +1150,7 @@ def build_cameras():
     add_camera("hero",   (330, 430, 235),   (0, 6, 38),      lens=50, fstop=5.0)
     add_camera("front",  (30, 470, 80),     (0, 30, 52),     lens=85, fstop=4.5)
     add_camera("top",    (60, -40, 800),    (0, -6, 0),      lens=50, fstop=8.0)
-    add_camera("motor",  (215, 275, 95),    (79.5, 79.5, 34), lens=100, fstop=2.8,
+    add_camera("motor",  (215, 275, 95),    (79.5, 79.5, 34), lens=100, fstop=4.5,
                focus_mm=(79.5, 79.5, 30))
     add_camera("rear",   (-120, -430, 150), (0, -30, 45),    lens=70, fstop=4.0,
                focus_mm=(0, -58, 60))
